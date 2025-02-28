@@ -3,6 +3,8 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, 
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
+st.set_page_config(page_title="Ndejat")
+
 # Database setup
 DATABASE_URL = "sqlite:///example.db"
 engine = create_engine(DATABASE_URL)
@@ -30,8 +32,10 @@ session = Session()
 
 # Authentication
 def authenticate(username, password):
-    # Simple authentication logic (replace with your own)
-    return username == "admin" and password == "password"
+    user = session.query(users).filter_by(username=username, password=password).first()
+    if user:
+        return True
+    return False
 
 # User registration function
 def register_user(username, password):
@@ -44,7 +48,7 @@ def register_user(username, password):
     return True, "User registered successfully"
 
 # Streamlit app
-st.title("Streamlit App with Authentication")
+st.title("Ndejat")
 
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
@@ -57,7 +61,8 @@ if not st.session_state.authenticated:
         if st.button("Login"):
             if authenticate(username, password):
                 st.session_state.authenticated = True
-                st.success("Logged in successfully")
+                st.rerun()
+                st.success("Kycja u krye me sukses")
             else:
                 st.error("Invalid username or password")
     elif page == "Sign Up":
@@ -68,19 +73,21 @@ if not st.session_state.authenticated:
             success, message = register_user(new_username, new_password)
             if success:
                 st.success(message)
+                st.session_state.authenticated = False
+                st.set_query_params()
             else:
                 st.error(message)
 else:
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Insert Data", "Logout"])
+    page = st.sidebar.radio("Go to", ["Home", "Logout"])
 
-    if page == "Insert Data":
-        st.header("Insert Data into Database")
-        host_name = st.text_input("Host Name")
-        date = st.date_input("Date", datetime.now())
-        excluded = st.text_input("Excluded")
+    if page == "Home":
+        st.header("Inserto te dhena")
+        host_name = st.text_input("Mikpritesi")
+        date = st.date_input("Data", datetime.now())
+        excluded = st.text_input("Perjashtuar")
 
-        if st.button("Submit"):
+        if st.button("Ruaj"):
             new_host = hosts.insert().values(
                 host_name=host_name,
                 date=date,
@@ -88,8 +95,34 @@ else:
             )
             session.execute(new_host)
             session.commit()
-            st.success("Data inserted successfully")
+            st.success("Te dhena u ruajten me sukses")
+
+        st.header("Lista e Mikpritesve")
+        host_list = session.query(hosts).all()
+        if host_list:
+            st.table([{ "ID": host.id, "Mikpritesi": host.host_name, "Data": host.date, "Perjashtuar": host.excluded } for host in host_list])
+        else:
+            st.write("Nuk ka te dhena")
+
+        if 'edit_host_id' in st.session_state:
+            st.header("Edito Mikpritesin")
+            host_to_edit = session.query(hosts).filter_by(id=st.session_state.edit_host_id).first()
+            new_host_name = st.text_input("Mikpritesi", value=host_to_edit.host_name)
+            new_date = st.date_input("Data", value=host_to_edit.date)
+            new_excluded = st.text_input("Perjashtuar", value=host_to_edit.excluded)
+
+            if st.button("Update"):
+                session.query(hosts).filter_by(id=st.session_state.edit_host_id).update({
+                    'host_name': new_host_name,
+                    'date': new_date,
+                    'excluded': new_excluded
+                })
+                session.commit()
+                st.success("Mikpritesi u perditesua me sukses")
+                del st.session_state.edit_host_id
+                st.experimental_rerun()
 
     elif page == "Logout":
         st.session_state.authenticated = False
-        st.success("Logged out successfully")
+        st.success("Ckyqja u krye me sukses")
+        st.experimental_set_query_params()
