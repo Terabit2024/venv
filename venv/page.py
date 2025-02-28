@@ -120,9 +120,9 @@ else:
                 session.commit()
                 st.success("Mikpritesi u perditesua me sukses")
                 del st.session_state.edit_host_id
-                st.experimental_rerun()
+                st.rerun()
 
     elif page == "Logout":
         st.session_state.authenticated = False
         st.success("Ckyqja u krye me sukses")
-        st.experimental_set_query_params()
+        st.query_params()
