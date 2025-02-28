@@ -43,7 +43,7 @@ if not st.session_state.authenticated:
             st.error("Invalid username or password")
 else:
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Insert Data", "Logout"])
+    page = st.sidebar.radio("Go to", ["Insert Data", "Register", "Logout"])
 
     if page == "Insert Data":
         st.header("Insert Data into Database")
@@ -60,6 +60,14 @@ else:
             session.execute(new_host)
             session.commit()
             st.success("Data inserted successfully")
+
+    elif page == "Register":
+        st.header("Register a New User")
+        new_username = st.text_input("New Username")
+        new_password = st.text_input("New Password", type="password")
+        if st.button("Register"):
+            # Add user registration logic here
+            st.success("User registered successfully")
 
     elif page == "Logout":
         st.session_state.authenticated = False
